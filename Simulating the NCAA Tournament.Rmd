@@ -2,7 +2,7 @@
 title: "Simulating the NCAA Tournament 2020"
 author: "Joel Bracken"
 date: "April 13, 2020"
-output: html_document
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
@@ -18,7 +18,7 @@ kenpom$AdjEM <- as.numeric(as.character(kenpom$AdjEM)) #adjusted efficiency marg
 kenpom$AdjT <- as.numeric(as.character(kenpom$AdjT)) #adjusted tempo
 ```
 
-The idea for simulating games is as follows: find the difference in AdjEM between the two teams and multiply is by the average number of possessions between the two teams divided by 200. We now have the expected points difference, but games are not always according to 'chalk', so we first calculate the probability of winning by finding the 1-the probability of being 0 or less from a normal distribution with a mean of the expected point differential and a standard deviation of 11 (suggested from KenPom). Now, to simulate the madness of March, I included a Tournamnet Randomness Factor. Let's walk through an example. If Kansas is supposed to beat Ohio State 89% of the time (on a neutral floor), we essentially then pick a random number between 0 and 100 and if that number is 89 or less, Kansas wins, if not, Ohio State wins. While this doesn't quite simulate the madness, it prevents our bracket from being too 'chalky'.
+The idea for simulating games is as follows: find the difference in AdjEM between the two teams and multiply it by the average number of possessions between the two teams divided by 200. We now have the expected points difference, but games are not always according to 'chalk', so we first calculate the probability of winning by finding the 1-the probability of being 0 or less from a normal distribution with a mean of the expected point differential and a standard deviation of 11 (suggested from KenPom). Now, to simulate the madness of March, I included a Tournamnet Randomness Factor. Let's walk through an example. If Kansas is supposed to beat Ohio State 89% of the time (on a neutral floor), we essentially then pick a random number between 0 and 100 and if that number is 89 or less, Kansas wins, if not, Ohio State wins. While this doesn't quite simulate the madness, it prevents our bracket from being too 'chalky'.
 
 ```{r}
 set.seed(2020) #for the 2020 Tourney
