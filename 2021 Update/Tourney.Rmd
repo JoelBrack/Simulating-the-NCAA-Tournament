@@ -1,0 +1,208 @@
+---
+title: "Tourney"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+data <- as.data.frame(read.csv('summary21_final.csv', header=TRUE)) #load in data
+kenpom <- data[,-c(1,3,4,6,7,8,9,10,11,12,13,14,16)]       # remove extra columns
+kenpom$AdjEM <- as.numeric(as.character(kenpom$AdjEM)) #adjusted efficiency margin
+kenpom$AdjTempo <- as.numeric(as.character(kenpom$AdjTempo)) #adjusted tempo
+
+overall <- subset(kenpom, select = "TeamName")
+
+overall$Round64 = 0
+overall$Round32 = 0
+overall$Sweet16 = 0
+overall$Elite8 = 0
+overall$Final4 = 0
+overall$ChampGame = 0
+overall$Champion = 0
+
+set.seed(2021) #for the 2020 Tourney
+
+#function to simulate a game
+simulate_game <- function(TeamA, TeamB){
+  
+  ExpectedPointDiff <- (kenpom[which(kenpom$Team==TeamA),3] - 
+                          kenpom[which(kenpom$Team==TeamB),3]) *
+    ((kenpom[which(kenpom$Team==TeamA),2]+kenpom[which(kenpom$Team==TeamB),2])/80)
+  ProbTeamAWins <- 1 - pnorm(q=0, mean = ExpectedPointDiff, sd=27) # sd 11 from KenPom
+  TRF <- runif(1, min = 0, max = 1) #Tourney Randomness Factor
+  
+  if (ProbTeamAWins >= TRF){
+    return (TeamA)
+  }
+  if (ProbTeamAWins < TRF){
+    return (TeamB)
+  }
+  else{
+    return(-1)
+  }
+}
+
+# Set up Play in Games
+#playin1 <- c('Norfolk St.','Appalachian St.')
+#playin2 <- c('Wichita St.','Drake')
+#playin3 <- c("Mount St. Mary's",'Texas Southern')
+#playin4 <- c('Michigan St.','UCLA')
+
+
+sim_a_round <- function(TeamsInRound){  #list of teams in round
+  winners=character()
+  for (i in seq(from=1, to=length(TeamsInRound)-1, by=2)){
+    winners= append(winners,simulate_game(TeamsInRound[i],TeamsInRound[i+1]))
+  }
+  
+  return(winners)
+}
+
+sim_the_tourney <- function(Round1){
+  
+  for (i in seq(from=1, to=length(Round1))){
+    overall[which(overall$TeamName==Round1[i]),]$Round64 <<- overall[which(overall$TeamName==Round1[i]),]$Round64 + 1
+  }
+  
+  
+  #####
+  Round2 <- sim_a_round(Round1)
+  for (i in seq(from=1, to=length(Round2))){
+    overall[which(overall$TeamName==Round2[i]),]$Round32 <<- overall[which(overall$TeamName==Round2[i]),]$Round32 + 1
+  }
+  #cat("The first round is complete, these teams advance to the round of 32!\n")
+  #print(Round2)
+  
+  #######################
+  
+  Sweet16 <- sim_a_round(Round2)
+  for (i in seq(from=1, to=length(Sweet16))){
+    overall[which(overall$TeamName==Sweet16[i]),]$Sweet16 <<- overall[which(overall$TeamName==Sweet16[i]),]$Sweet16 + 1
+  }
+  #cat('\n\nThe following teams have earned a spot in the Sweet 16! \n')  
+  #print(Sweet16)
+  
+  ############
+  
+  Elite8 <- sim_a_round(Sweet16)
+  for (i in seq(from=1, to=length(Elite8))){
+    overall[which(overall$TeamName==Elite8[i]),]$Elite8 <<- overall[which(overall$TeamName==Elite8[i]),]$Elite8 + 1
+  }
+  #cat('\n\nThese teams kept dancing into the Elite 8! \n')
+  #print(Elite8)
+  
+  #############
+  
+  Final4 <- sim_a_round(Elite8)
+  for (i in seq(from=1, to=length(Final4))){
+    overall[which(overall$TeamName==Final4[i]),]$Final4 <<- overall[which(overall$TeamName==Final4[i]),]$Final4 + 1
+  }
+  #cat('\n\nOne shining moment for these four teams, who have earned their spot in the Final .\n',
+  #'We will see matchups of', Final4[1], ' vs ' ,Final4[2], ' and ' ,
+  #Final4[3], ' vs ' , Final4[4], '.\n')
+  
+  #################
+  
+  ChampGame <- sim_a_round(Final4)
+  for (i in seq(from=1, to=length(ChampGame))){
+    overall[which(overall$TeamName==ChampGame[i]),]$ChampGame <<- overall[which(overall$TeamName==ChampGame[i]),]$ChampGame + 1
+  }
+  # cat('\nA season to remember...the championship game will feature ' 
+  #      , ChampGame[1] , ' and ' , ChampGame[2], '.\n')
+  
+  #############
+  
+  Champ <- sim_a_round(ChampGame)
+  for (i in seq(from=1, to=length(ChampGame))){
+    overall[which(overall$TeamName==Champ[i]),]$Champion <<- overall[which(overall$TeamName==Champ[i]),]$Champion + 1
+  }
+  #cat('\nHang the Banner! The national champion is ' , Champ, '!!!!' )
+}
+
+
+
+```
+
+```{r}
+iterations = 10000
+for (i in seq(from=1, to=iterations)){
+
+#Results from Play in Games
+#playin1win <- simulate_game(playin1[1],playin1[2])
+#playin2win <- simulate_game(playin2[1],playin2[2])
+#playin3win <- simulate_game(playin3[1],playin3[2])
+#playin4win <- simulate_game(playin4[1],playin4[2])
+
+#overall[which(overall$TeamName==playin1win),]$Round64 = overall[which(overall$TeamName==playin1win),]$Round64 + 1
+#overall[which(overall$TeamName==playin2win),]$Round64 = overall[which(overall$TeamName==playin2win),]$Round64 + 1
+#overall[which(overall$TeamName==playin3win),]$Round64 = overall[which(overall$TeamName==playin3win),]$Round64 + 1
+#overall[which(overall$TeamName==playin4win),]$Round64 = overall[which(overall$TeamName==playin4win),]$Round64 + 1
+
+
+#Set up Regions
+
+Midwest <-c('Gonzaga','Norfolk St.',           # 1 vs 16 seed
+         'Oklahoma','Missouri',         # 8 vs 9 seed
+         'Creighton','UC Santa Barbara',         # 5 vs 12 
+         'Virginia','Ohio',     # 4 vs 13 seed
+         'USC','Drake',   # 6 vs 11 seed
+         'Kansas','Eastern Washington',            # 3 vs 14
+         'Oregon','Out',    # 7 vs 10 seed
+         'Out','Out') # 2 vs 15 seed
+
+East <- c('Michigan','Texas Southern',
+          'LSU','St. Bonaventure',
+          'Colorado','Georgetown',
+          'Florida St.', 'UNC Greensboro',
+          'BYU','UCLA',
+          'Texas','Abilene Christian',
+          'Connecticut','Maryland',
+          'Alabama','Iona')
+
+West <- c('Baylor', 'Hartford',
+          'North Carolina','Wisconsin',
+          'Villanova','Winthrop',
+          'Purdue','North Texas',
+          'Texas Tech','Utah St.',
+          'Arkansas','Colgate',
+          'Florida','Virginia Tech',
+          'Ohio St.','Oral Roberts')
+
+South <- c('Illinois','Drexel',
+           "Loyola Chicago",'Georgia Tech',
+           'Tennessee','Oregon St.',
+           'Oklahoma St.','Liberty',
+           'San Diego St.','Syracuse',
+           'West Virginia','Morehead St.',
+           'Clemson','Rutgers',
+           'Houston','Cleveland St.')
+
+#put 64 teams in a list
+FieldOf64 <- c(Midwest,East,West,South)
+
+sim_the_tourney(FieldOf64)
+
+}
+
+
+
+```
+
+```{r}
+tourney_teams = overall[which(overall$Round64>0),]
+tourney_teams$Round64 = tourney_teams$Round64 / iterations
+tourney_teams$Round32 = tourney_teams$Round32 / iterations
+tourney_teams$Sweet16 = tourney_teams$Sweet16 / iterations
+tourney_teams$Elite8 = tourney_teams$Elite8  / iterations
+tourney_teams$Final4 = tourney_teams$Final4  / iterations
+tourney_teams$ChampGame = tourney_teams$ChampGame  / iterations
+tourney_teams$Champion = tourney_teams$Champion  / iterations
+
+write.csv(tourney_teams,"tourney_day1.csv", row.names = FALSE)
+#divide = iterations / 100
+#tourney_teams = tourney_teams/divide
+
+```
